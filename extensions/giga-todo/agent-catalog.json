@@ -1,0 +1,922 @@
+{
+  "version": "1.2.0",
+  "skills": [
+    {
+      "id": "openspec-context",
+      "version": "2.2.0",
+      "description": "Канон воркфлоу: постоянный контекст (`openspec/context.md`, сервисные `GIGACODE.md`), схема с гейтом design-grill, пайплайн, git-правила, Jira-ключ, самопроверка. Грузится первым во всех скиллах пайплайна",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-backend-sdd",
+      "version": "2.4.0",
+      "description": "Полный цикл бэкенда: proposal + specs → design → гейт design-grill → tasks → код → тесты → ревью → архив; состояние в `openspec/agents/{TICKET}/work-state.md`",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-jira-plan-full",
+      "version": "2.4.0",
+      "description": "Тот же полный цикл планирования Jira-задачи в старом формате (WHY→WHAT→HOW→grill→tasks→IMPLEMENT→VERIFY→ARCHIVE); альтернативный вход, не шаг после SDD",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-jira-plan",
+      "version": "4.3.0",
+      "description": "Справочный указатель: сам план не выполняет, объясняет, какой из двух входов полный",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-apply",
+      "version": "2.3.0",
+      "description": "Применение утверждённого плана к коду через `/opsx-apply`: проверка комплектности артефактов, последовательное выполнение задач, тесты после закрытого гейта",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-artifacts-check",
+      "version": "1.2.0",
+      "description": "Провокационный пересмотр самих решений по proposal и specs до закрытия дизайна: вопросы автору + обязательный explore с альтернативами",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-artifacts-roast",
+      "version": "1.5.0",
+      "description": "Жёсткая прожарка собранной цепочки из пяти артефактов: целостность WHY→WHAT→HOW→grill→tasks и согласованность с разделами контекста; вердикт в `openspec/agents/{TICKET}/`",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-context-extract",
+      "version": "1.4.0",
+      "description": "Из диффа кода (внутри сабмодуля) готовит предложения инвариантов, паттернов и точек расширения в `context-proposals.md`; в контекст пишет только после одобрения",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-archive",
+      "version": "2.4.0",
+      "description": "Оркестратор архивации: проверяет предусловия (все `- [x]`, grill закрыт, PR смержен, тесты зелёные) и вызывает сборщик контекста плюс консольную архивацию",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "openspec-archive-cli",
+      "version": "1.4.0",
+      "description": "Делает `openspec archive <change>` и сверяет, что каждое требование из delta попало в main specs по точному совпадению заголовка",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "ksupbim-review",
+      "version": "3.4.1",
+      "description": "Ревью ветки сервиса по четырём осям: выполнение tasks, соответствие specs, следование design, согласованность с контекстом; дифф внутри сабмодуля, вердикт в `openspec/agents/reviews/`",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "pr-plan",
+      "version": "5.4.0",
+      "description": "Разбор замечаний PR в Bitbucket: на артефактах — план правок артефактов, на коде — сценарий правки спецификации и отдельный план правки кода",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "test-runner",
+      "version": "3.5.0",
+      "description": "Артефакт-driven проверка тестирования: полный чеклист сценариев и контрактов, сверка покрытия, дописывание тестов, запуск `dotnet test` (для osa — `./mvnw test`)",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "sberchat-analyst",
+      "version": "1.4.0",
+      "description": "Переписка с аналитиками в СберЧате через `devtools`: вопросы только в групповой чат `gigacode SA`, привязка к открытому пункту задачи, ожидание ответа фоновым опросом",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "gigacode-chat",
+      "version": "1.3.0",
+      "description": "Ведёт сессию GigaCode из СберЧата: отдельный чат под сессию, статусное дублирование хода работы, подбор промптов обратно; четыре обязательные дословные строки; запись в git и внешние сообщения — только после подтверждения",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "pixso-design-reader",
+      "version": "1.0.0",
+      "description": "Точка входа из требований в дизайн: находит ссылку на Pixso в ФТ или артефактах, формулирует вопрос к макету, получает ответ у субагента, сверяет с дословной цитатой требования и фиксирует расхождения",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "ru-text",
+      "version": "2.10.10+g1",
+      "description": "Корпус правил русского текста (типографика, инфостиль со стоп-словами, UX-микротекст, деловая переписка, грамматика, анти-паттерны); типографика собственного вывода правится молча",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "ru-check",
+      "version": "2.10.10+g1",
+      "description": "Полная вычитка по всему корпусу: находки с правилом, вариантом замены и тяжестью; исправленный текст списком, исходный файл не трогается",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "ru-score",
+      "version": "2.10.10+g1",
+      "description": "Числовая оценка 0,0–10,0 по пяти измерениям с невзаимозаменяемыми потолками; ничего не правит",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "skill-builder",
+      "version": "1.1.0",
+      "description": "Фабрика скиллов: создаёт папку ровно из трёх файлов по канону, следит за чистотой каталога скиллов и требует самопроверку по списку запрещённых токенов канона",
+      "origin": "user",
+      "availability": "external-unverified"
+    },
+    {
+      "id": "brainstorming",
+      "version": "1.0.0",
+      "description": "Проработка требований с согласованием через Giga To Do",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    },
+    {
+      "id": "frontend-development",
+      "version": "1.0.0",
+      "description": "Разработка фронтенда, локальный запуск с API стенда, сценарии SberBrowser devtools и сравнение с дизайном.",
+      "origin": "application",
+      "availability": "bundled"
+    },
+    {
+      "id": "receiving-code-review",
+      "version": "1.0.0",
+      "description": "Техническая оценка замечаний критика Giga To Do",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    },
+    {
+      "id": "requesting-code-review",
+      "version": "1.0.0",
+      "description": "Подготовка результата для отдельного критика Giga To Do",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    },
+    {
+      "id": "systematic-debugging",
+      "version": "1.0.0",
+      "description": "Систематическая диагностика ошибок в задаче Giga To Do",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    },
+    {
+      "id": "task-critique",
+      "version": "1.0.0",
+      "description": "Независимая критика результата Giga To Do с вопросами исполнителю, принятием или возвратом.",
+      "origin": "application",
+      "availability": "bundled"
+    },
+    {
+      "id": "task-decomposition",
+      "version": "1.0.0",
+      "description": "Создание связанных задач на досках Giga To Do, включая разбор внешних источников и повторные проверки.",
+      "origin": "application",
+      "availability": "bundled"
+    },
+    {
+      "id": "task-execution",
+      "version": "1.0.0",
+      "description": "Выполнение назначенной задачи Giga To Do с прогрессом и результатом через MCP giga-todo.",
+      "origin": "application",
+      "availability": "bundled"
+    },
+    {
+      "id": "task-feedback",
+      "version": "1.0.0",
+      "description": "Ответы исполнителя критику, проверка замечаний и доработка задачи Giga To Do.",
+      "origin": "application",
+      "availability": "bundled"
+    },
+    {
+      "id": "test-driven-development",
+      "version": "1.0.0",
+      "description": "Разработка проверяемого поведения через failing test и минимальную реализацию",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    },
+    {
+      "id": "verification-before-completion",
+      "version": "1.0.0",
+      "description": "Проверка доказательств перед завершением задачи Giga To Do",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    },
+    {
+      "id": "writing-plans",
+      "version": "1.0.0",
+      "description": "Планирование самостоятельных задач без второго диспетчера",
+      "origin": "superpowers-adapter",
+      "availability": "bundled"
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "execute",
+      "when": "Каждый исполнитель начинает задачу",
+      "required": [
+        "task-execution"
+      ],
+      "optional": [],
+      "gate": "",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "critique",
+      "when": "Каждый ход критика",
+      "required": [
+        "task-critique",
+        "verification-before-completion"
+      ],
+      "optional": [],
+      "gate": "",
+      "workflow": "any",
+      "roles": [
+        "Critic"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "feedback",
+      "when": "Ответ на вопрос или замечания критика",
+      "required": [
+        "task-feedback",
+        "receiving-code-review"
+      ],
+      "optional": [],
+      "gate": "",
+      "workflow": "any",
+      "roles": [
+        "Executor",
+        "ExecutorReply"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "decompose",
+      "when": "Поручена декомпозиция или создание карточек из источника",
+      "required": [
+        "task-decomposition"
+      ],
+      "optional": [],
+      "gate": "",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "generic-analysis",
+      "when": "Нет OpenSpec, нужно проработать требования",
+      "required": [
+        "brainstorming",
+        "writing-plans"
+      ],
+      "optional": [],
+      "gate": "",
+      "workflow": "generic",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics"
+      ]
+    },
+    {
+      "id": "openspec-plan",
+      "when": "В проекте OpenSpec и требуется новый план",
+      "required": [
+        "openspec-context"
+      ],
+      "optional": [
+        "openspec-backend-sdd",
+        "openspec-jira-plan-full",
+        "openspec-jira-plan"
+      ],
+      "gate": "Выбрать ровно один полный вход; openspec-jira-plan лишь указатель. Остановить полный цикл на границе текущего задания; реализацию, критику и архив не выполнять самовольно.",
+      "workflow": "openspec",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "openspec-design",
+      "when": "Нужна проверка proposal/specs и дизайна",
+      "required": [
+        "openspec-context",
+        "openspec-artifacts-check"
+      ],
+      "optional": [
+        "openspec-artifacts-roast"
+      ],
+      "gate": "Roast только после наличия всех пяти артефактов. Человеческий design-grill не заменять решением агента.",
+      "workflow": "openspec",
+      "roles": [
+        "Executor",
+        "Critic"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "openspec-apply",
+      "when": "Есть утверждённые артефакты и требуется реализация",
+      "required": [
+        "openspec-context",
+        "openspec-apply"
+      ],
+      "optional": [
+        "test-runner"
+      ],
+      "gate": "Не начинать код до закрытия необходимых гейтов.",
+      "workflow": "openspec",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "backend",
+        "frontend"
+      ]
+    },
+    {
+      "id": "openspec-review",
+      "when": "Проверяется совместимый OpenSpec backend",
+      "required": [
+        "openspec-context",
+        "ksupbim-review"
+      ],
+      "optional": [
+        "openspec-artifacts-roast"
+      ],
+      "gate": "Проверить предположения о сабмодулях и структуре проекта; иначе общий критик.",
+      "workflow": "openspec",
+      "roles": [
+        "Critic"
+      ],
+      "boards": [
+        "backend"
+      ]
+    },
+    {
+      "id": "context-proposals",
+      "when": "Явно поручено извлечение контекста из диффа",
+      "required": [
+        "openspec-context",
+        "openspec-context-extract"
+      ],
+      "optional": [],
+      "gate": "В постоянный контекст писать только после предусмотренного одобрения.",
+      "workflow": "openspec",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "archive",
+      "when": "Явно поручена архивация принятого и смерженного изменения",
+      "required": [
+        "openspec-context",
+        "openspec-archive",
+        "openspec-archive-cli"
+      ],
+      "optional": [],
+      "gate": "Все условия исходника: tasks закрыты, grill закрыт, тесты зелёные, PR/MR слит. Done не запускает архив.",
+      "workflow": "openspec",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "external-pr-feedback",
+      "when": "Поручен разбор замечаний внешнего PR",
+      "required": [
+        "pr-plan"
+      ],
+      "optional": [
+        "task-feedback"
+      ],
+      "gate": "Только если skill поддерживает источник. Для другого хостинга общий feedback, без требований конкретного MCP.",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "frontend",
+      "when": "Нужна реализация или проверка интерфейса",
+      "required": [
+        "frontend-development"
+      ],
+      "optional": [
+        "pixso-design-reader"
+      ],
+      "gate": "Критик не изменяет исходники. Получить browser lease до devtools.",
+      "workflow": "any",
+      "roles": [
+        "Executor",
+        "Critic"
+      ],
+      "boards": [
+        "frontend",
+        "testing"
+      ]
+    },
+    {
+      "id": "pixso",
+      "when": "В задании есть макет Pixso",
+      "required": [
+        "pixso-design-reader"
+      ],
+      "optional": [],
+      "gate": "Требуются pixso-mockup-reader и devtools. Нет помощника — блокировка. Скриншоты в файлы; не resize/emulate на Pixso.",
+      "workflow": "any",
+      "roles": [
+        "Executor",
+        "Critic"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "tests",
+      "when": "Поручены тестирование или реализация проверяемого поведения",
+      "required": [
+        "verification-before-completion"
+      ],
+      "optional": [
+        "test-runner",
+        "test-driven-development"
+      ],
+      "gate": "test-runner применять при совместимости проекта; критик не дописывает тесты в исходники. TDD — для изменения поведения, а не чтения.",
+      "workflow": "any",
+      "roles": [
+        "Executor",
+        "Critic"
+      ],
+      "boards": [
+        "backend",
+        "frontend",
+        "testing"
+      ]
+    },
+    {
+      "id": "debug",
+      "when": "Обнаружен дефект или падение проверки",
+      "required": [
+        "systematic-debugging"
+      ],
+      "optional": [
+        "test-driven-development"
+      ],
+      "gate": "",
+      "workflow": "any",
+      "roles": [
+        "Executor",
+        "Critic"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "handoff",
+      "when": "Исполнитель передаёт результат критику",
+      "required": [
+        "verification-before-completion",
+        "requesting-code-review"
+      ],
+      "optional": [],
+      "gate": "Передать пакет через submit_result; не запускать собственного reviewer.",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "russian",
+      "when": "Подготовка русского текста",
+      "required": [
+        "ru-text"
+      ],
+      "optional": [
+        "ru-check",
+        "ru-score"
+      ],
+      "gate": "ru-check — при порученной вычитке, ru-score — при запросе оценки; не менять исходный файл без поручения.",
+      "workflow": "any",
+      "roles": [
+        "Executor",
+        "Critic",
+        "ExecutorReply"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "analyst-chat",
+      "when": "Явно поручены вопросы внешним аналитикам",
+      "required": [
+        "sberchat-analyst"
+      ],
+      "optional": [],
+      "gate": "Согласовать внешние сообщения по исходнику; только разрешённая группа и открытый пункт. Иначе request_clarification.",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "session-chat",
+      "when": "Явно включено ведение сессии через внешний чат",
+      "required": [
+        "gigacode-chat"
+      ],
+      "optional": [],
+      "gate": "Не включать статусное дублирование по умолчанию. Соблюдать дословные строки и подтверждения из полного SKILL.md.",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    },
+    {
+      "id": "skill-maintenance",
+      "when": "Явно поручено создание/изменение навыка",
+      "required": [
+        "skill-builder"
+      ],
+      "optional": [],
+      "gate": "Прочитать полный канон; исходник требует три файла и самопроверку. Не изменять пользовательские навыки автоматически.",
+      "workflow": "any",
+      "roles": [
+        "Executor"
+      ],
+      "boards": [
+        "analytics",
+        "frontend",
+        "backend",
+        "testing"
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "id": "executor",
+      "allow": [
+        "Bash(git status)",
+        "Bash(git diff)",
+        "Bash(git diff --stat)",
+        "Bash(git show)",
+        "Bash(git log -5 --oneline)"
+      ],
+      "ask": [
+        "Bash(git push*)"
+      ],
+      "deny": [
+        "Bash(git reset --hard*)",
+        "Bash(git clean*)",
+        "Bash(git push --force*)"
+      ],
+      "disallowedTools": [],
+      "instructions": "Правки только в выделенных worktree. Сборки, тесты и публикации по полномочиям проекта. Не отменять подтверждения исходных навыков. Правило Jira-веток: сначала прочитай тикет через свои инструменты и установи фактический тип. Story → feature/KEY-123; Bug → bugfix/KEY-123, где KEY-123 — точный ключ тикета, без кавычек и дополнительного суффикса. Только исполнитель переименовывает текущую служебную ветку в назначенном worktree командой git branch -m; не переключайся на чужую существующую ветку. Если имя занято, тип неясен, ссылка недоступна или в задаче несколько основных тикетов — request_clarification; не угадывай и не удаляй чужие ветки. Для других типов без отдельного правила сохраняй служебную ветку. Запиши ключ, подтверждённый тип и имя ветки в report_progress и итог. Критик проверяет это правило, не переименовывает ветки; ExecutorReply только отвечает."
+    },
+    {
+      "id": "critic",
+      "allow": [
+        "Bash(git status)",
+        "Bash(git diff)",
+        "Bash(git diff --stat)",
+        "Bash(git show)",
+        "Bash(git log -5 --oneline)"
+      ],
+      "ask": [
+        "Bash(python*)",
+        "Bash(node *)",
+        "Bash(sh *)",
+        "Bash(bash *)",
+        "Bash(zsh *)",
+        "Bash(pwsh *)"
+      ],
+      "deny": [
+        "Write",
+        "Edit",
+        "write_file",
+        "edit",
+        "Bash(git commit*)",
+        "Bash(git push*)",
+        "Bash(git merge*)",
+        "Bash(git reset*)",
+        "Bash(git clean*)"
+      ],
+      "disallowedTools": [
+        "write_file",
+        "edit"
+      ],
+      "instructions": "Исходники не менять. Shell по умолчанию требует подтверждения; точные test/build-команды можно добавить в окружении после проверки. Ни один шаблон не является OS sandbox. Правило Jira-веток: сначала прочитай тикет через свои инструменты и установи фактический тип. Story → feature/KEY-123; Bug → bugfix/KEY-123, где KEY-123 — точный ключ тикета, без кавычек и дополнительного суффикса. Только исполнитель переименовывает текущую служебную ветку в назначенном worktree командой git branch -m; не переключайся на чужую существующую ветку. Если имя занято, тип неясен, ссылка недоступна или в задаче несколько основных тикетов — request_clarification; не угадывай и не удаляй чужие ветки. Для других типов без отдельного правила сохраняй служебную ветку. Запиши ключ, подтверждённый тип и имя ветки в report_progress и итог. Критик проверяет это правило, не переименовывает ветки; ExecutorReply только отвечает."
+    },
+    {
+      "id": "reply",
+      "allow": [
+        "Bash(git status)",
+        "Bash(git diff)",
+        "Bash(git diff --stat)",
+        "Bash(git show)",
+        "Bash(git log -5 --oneline)"
+      ],
+      "ask": [
+        "Bash(python*)",
+        "Bash(node *)",
+        "Bash(sh *)",
+        "Bash(bash *)",
+        "Bash(zsh *)",
+        "Bash(pwsh *)"
+      ],
+      "deny": [
+        "Write",
+        "Edit",
+        "write_file",
+        "edit",
+        "Bash(git commit*)",
+        "Bash(git push*)",
+        "Bash(git merge*)"
+      ],
+      "disallowedTools": [
+        "write_file",
+        "edit"
+      ],
+      "instructions": "Только объяснения; изменение результата требует возврата в To Do. Не вызывать реализацию или публикацию. Правило Jira-веток: сначала прочитай тикет через свои инструменты и установи фактический тип. Story → feature/KEY-123; Bug → bugfix/KEY-123, где KEY-123 — точный ключ тикета, без кавычек и дополнительного суффикса. Только исполнитель переименовывает текущую служебную ветку в назначенном worktree командой git branch -m; не переключайся на чужую существующую ветку. Если имя занято, тип неясен, ссылка недоступна или в задаче несколько основных тикетов — request_clarification; не угадывай и не удаляй чужие ветки. Для других типов без отдельного правила сохраняй служебную ветку. Запиши ключ, подтверждённый тип и имя ветки в report_progress и итог. Критик проверяет это правило, не переименовывает ветки; ExecutorReply только отвечает."
+    }
+  ],
+  "profiles": [
+    {
+      "id": "analytics-executor",
+      "boardId": "analytics",
+      "role": "Executor",
+      "title": "Аналитик",
+      "policyId": "executor",
+      "scenarioIds": [
+        "execute",
+        "feedback",
+        "decompose",
+        "generic-analysis",
+        "openspec-plan",
+        "openspec-design",
+        "context-proposals",
+        "archive",
+        "external-pr-feedback",
+        "pixso",
+        "debug",
+        "handoff",
+        "russian",
+        "analyst-chat",
+        "session-chat",
+        "skill-maintenance"
+      ]
+    },
+    {
+      "id": "analytics-critic",
+      "boardId": "analytics",
+      "role": "Critic",
+      "title": "Критик: Аналитик",
+      "policyId": "critic",
+      "scenarioIds": [
+        "critique",
+        "openspec-design",
+        "pixso",
+        "debug",
+        "russian"
+      ]
+    },
+    {
+      "id": "frontend-executor",
+      "boardId": "frontend",
+      "role": "Executor",
+      "title": "Frontend-разработчик",
+      "policyId": "executor",
+      "scenarioIds": [
+        "execute",
+        "feedback",
+        "decompose",
+        "openspec-plan",
+        "openspec-design",
+        "openspec-apply",
+        "context-proposals",
+        "archive",
+        "external-pr-feedback",
+        "frontend",
+        "pixso",
+        "tests",
+        "debug",
+        "handoff",
+        "russian",
+        "analyst-chat",
+        "session-chat",
+        "skill-maintenance"
+      ]
+    },
+    {
+      "id": "frontend-critic",
+      "boardId": "frontend",
+      "role": "Critic",
+      "title": "Критик: Frontend-разработчик",
+      "policyId": "critic",
+      "scenarioIds": [
+        "critique",
+        "openspec-design",
+        "frontend",
+        "pixso",
+        "tests",
+        "debug",
+        "russian"
+      ]
+    },
+    {
+      "id": "backend-executor",
+      "boardId": "backend",
+      "role": "Executor",
+      "title": "Backend-разработчик",
+      "policyId": "executor",
+      "scenarioIds": [
+        "execute",
+        "feedback",
+        "decompose",
+        "openspec-plan",
+        "openspec-design",
+        "openspec-apply",
+        "context-proposals",
+        "archive",
+        "external-pr-feedback",
+        "pixso",
+        "tests",
+        "debug",
+        "handoff",
+        "russian",
+        "analyst-chat",
+        "session-chat",
+        "skill-maintenance"
+      ]
+    },
+    {
+      "id": "backend-critic",
+      "boardId": "backend",
+      "role": "Critic",
+      "title": "Критик: Backend-разработчик",
+      "policyId": "critic",
+      "scenarioIds": [
+        "critique",
+        "openspec-design",
+        "openspec-review",
+        "pixso",
+        "tests",
+        "debug",
+        "russian"
+      ]
+    },
+    {
+      "id": "testing-executor",
+      "boardId": "testing",
+      "role": "Executor",
+      "title": "Тестировщик",
+      "policyId": "executor",
+      "scenarioIds": [
+        "execute",
+        "feedback",
+        "decompose",
+        "openspec-plan",
+        "openspec-design",
+        "context-proposals",
+        "archive",
+        "external-pr-feedback",
+        "frontend",
+        "pixso",
+        "tests",
+        "debug",
+        "handoff",
+        "russian",
+        "analyst-chat",
+        "session-chat",
+        "skill-maintenance"
+      ]
+    },
+    {
+      "id": "testing-critic",
+      "boardId": "testing",
+      "role": "Critic",
+      "title": "Критик: Тестировщик",
+      "policyId": "critic",
+      "scenarioIds": [
+        "critique",
+        "openspec-design",
+        "frontend",
+        "pixso",
+        "tests",
+        "debug",
+        "russian"
+      ]
+    }
+  ],
+  "companionAgents": [
+    {
+      "id": "pixso-mockup-reader",
+      "availability": "external-unverified",
+      "description": "Только чтение Pixso, shell запрещён; блокаторы возвращает родителю"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff)",
+      "Bash(git diff --stat)",
+      "Bash(git show)",
+      "Bash(git log -5 --oneline)"
+    ],
+    "ask": [
+      "Bash(python*)",
+      "Bash(node *)",
+      "Bash(sh *)",
+      "Bash(bash *)",
+      "Bash(zsh *)",
+      "Bash(pwsh *)"
+    ],
+    "deny": [
+      "Write",
+      "Edit",
+      "write_file",
+      "edit",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git merge*)"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+.vs/
+.idea/
+.DS_Store
+.runtime/
+.env
+appsettings.Local.json
+**/.gigacode/GIGACODE.local.md
+TestResults/
+artifacts/
+**/node_modules/
+**/__pycache__/
+frontend/public/pixel-agents/
+frontend/.vite/

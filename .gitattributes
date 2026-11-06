@@ -1,0 +1,4 @@
+# Vendored checksums cover original bytes, including line endings on Windows.
+*.sln text eol=crlf
+/frontend/vendor/pixel-agents/** -text
+/extensions/giga-todo/vendor/superpowers/** -text
