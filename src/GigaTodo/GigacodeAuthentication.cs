@@ -14,6 +14,7 @@ public sealed class GigacodeAuthentication
     private readonly SemaphoreSlim saveGate = new(1, 1);
     private readonly SemaphoreSlim executionGate = new(1, 1);
     private AuthenticationSettings settings;
+    private long generation;
 
     public GigacodeAuthentication(Workspace workspace, IHostEnvironment environment, IOptions<RuntimeOptions> options)
     {
@@ -25,6 +26,7 @@ public sealed class GigacodeAuthentication
     }
 
     public AuthenticationSettings Current => Volatile.Read(ref settings);
+    public long Generation => Interlocked.Read(ref generation);
 
     private static AuthenticationSettings Validate(AuthenticationSettings? value)
     {
@@ -57,13 +59,16 @@ public sealed class GigacodeAuthentication
         }
     }
 
-    public async Task BeforeLaunch(CancellationToken ct)
+    public async Task Recover(long observedGeneration, CancellationToken ct)
     {
         await executionGate.WaitAsync(ct);
         try
         {
+            // Another failed CLI process may already have refreshed the shared credentials.
+            if (Generation != observedGeneration) return;
             var current = Current;
-            if (current.Command.Length == 0) return;
+            if (current.Command.Length == 0)
+                throw new RuleException("Gigacode сообщил об ошибке авторизации. Задайте команду скрипта в настройках авторизации и продолжите задачу.");
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
             timeout.CancelAfter(TimeSpan.FromSeconds(current.TimeoutSeconds));
             var token = timeout.Token;
@@ -99,11 +104,12 @@ public sealed class GigacodeAuthentication
                     if (!process.HasExited) { process.Kill(entireProcessTree: true); await process.WaitForExitAsync(CancellationToken.None); }
                 }
                 if (process.ExitCode != 0)
-                    throw new RuleException($"Скрипт авторизации Gigacode завершился с кодом {process.ExitCode}. Агент не запущен. Проверьте скрипт в настройках и продолжите задачу.");
+                    throw new RuleException($"Скрипт авторизации Gigacode завершился с кодом {process.ExitCode}. Агент не возобновлён. Проверьте скрипт в настройках и продолжите задачу.");
+                Interlocked.Increment(ref generation);
             }
             catch (OperationCanceledException) when (!ct.IsCancellationRequested)
             {
-                throw new RuleException($"Скрипт авторизации Gigacode превысил таймаут {current.TimeoutSeconds} с. Агент не запущен.");
+                throw new RuleException($"Скрипт авторизации Gigacode превысил таймаут {current.TimeoutSeconds} с. Агент не возобновлён.");
             }
             catch (Win32Exception)
             {

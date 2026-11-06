@@ -28,13 +28,13 @@ export function AuthenticationSettings({ notify }) {
   }
   return <section className="detail-section">
     <h3>Авторизация Gigacode · все доски</h3>
-    <p className="muted">Скрипт выполняется перед каждым запуском Gigacode. Пустая команда отключает автоматическую авторизацию. Сохранение настройки само скрипт не запускает.</p>
+    <p className="muted">При ошибке авторизации Gigacode бэкенд запускает скрипт и один раз возобновляет прежнюю сессию. Пустая команда отключает восстановление. Сохранение настройки само скрипт не запускает.</p>
     {error ? <p role="alert">{error} <button type="button" className="secondary small" onClick={() => setReload(value => value + 1)}>Повторить загрузку</button></p>
       : !settings ? <p className="muted">Загрузка настроек авторизации…</p>
         : <form id="authentication-form" onSubmit={submit}>
           <Field label="Команда запуска скрипта авторизации" name="authenticationCommand" value={settings.command} area maxLength={8192} spellCheck={false} autoComplete="off" disabled={busy} />
           <Field label="Таймаут авторизации, секунды" name="authenticationTimeoutSeconds" value={settings.timeoutSeconds} type="number" min="5" max="600" required disabled={busy} />
-          <p className="muted">Команда выполняется на компьютере сервиса: /bin/sh на macOS/Linux, cmd.exe на Windows. Укажите абсолютный путь к скрипту; он должен работать без ввода и возвращать код 0 при успехе. Для нескольких агентов скрипт запускается последовательно. Вывод скрипта не сохраняется.</p>
+          <p className="muted">Скрипт запускает бэкенд на компьютере сервиса: /bin/sh на macOS/Linux, cmd.exe на Windows. Укажите абсолютный путь; скрипт должен работать без ввода и возвращать код 0 при успехе. Одновременные ошибки используют одно успешное обновление авторизации. Вывод скрипта не сохраняется.</p>
           <div className="actions"><button type="submit" disabled={busy}>{busy ? 'Сохранение…' : 'Сохранить авторизацию'}</button></div>
         </form>}
   </section>;

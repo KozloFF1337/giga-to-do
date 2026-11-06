@@ -135,7 +135,6 @@ public sealed class GigacodeRunner(IServiceScopeFactory scopes, Workspace worksp
 {
     public async Task Execute(Assignment assignment, CancellationToken ct)
     {
-        await authentication.BeforeLaunch(ct);
         WorkItem task; Board board; TaskEvent[] history; AttachmentInfo[] attachments;
         await using (var scope = scopes.CreateAsyncScope())
         {
@@ -169,33 +168,57 @@ public sealed class GigacodeRunner(IServiceScopeFactory scopes, Workspace worksp
         if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(settingsPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
         var session = assignment.Role == AgentRole.Critic ? task.CriticSession : task.ExecutorSession;
         var approvalMode = AgentCatalog.ApprovalMode(assignment.Role, board.ApprovalMode);
-        var info = new ProcessStartInfo(options.Value.Executable)
-        {
-            WorkingDirectory = cwd, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true
-        };
-        var arguments = new List<string> { "-p", prompt, "-o", "stream-json", "--approval-mode", approvalMode,
-            "--max-wall-time", options.Value.WallTimeSeconds + "s", "--max-session-turns", options.Value.MaxTurns.ToString(), "--max-tool-calls", options.Value.MaxToolCalls.ToString() };
-        if (!string.IsNullOrWhiteSpace(board.Model)) arguments.AddRange(["--model", board.Model]);
-        if (session is not null) arguments.AddRange(["--resume", session]);
-        foreach (var argument in arguments) info.ArgumentList.Add(argument);
         try
         {
-            using var process = Process.Start(info) ?? throw new RuleException("Не удалось запустить Gigacode");
-            process.StandardInput.Close();
-            using var registration = ct.Register(() => { try { process.Kill(true); } catch (InvalidOperationException) { } });
-            var stdout = Read(process.StandardOutput, assignment, true, ct);
-            var stderr = Read(process.StandardError, assignment, false, ct);
-            try { await Task.WhenAll(stdout, stderr, process.WaitForExitAsync(ct)); }
-            finally
+            for (var attempt = 0; attempt < 2; attempt++)
             {
-                if (!process.HasExited) { process.Kill(true); await process.WaitForExitAsync(CancellationToken.None); }
+                var generation = authentication.Generation;
+                var output = new GigacodeOutput(session);
+                var info = new ProcessStartInfo(options.Value.Executable)
+                {
+                    WorkingDirectory = cwd, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true, RedirectStandardInput = true
+                };
+                var input = attempt == 0 || session is null ? prompt : "Авторизация Gigacode восстановлена бэкендом. Продолжи текущую задачу с места остановки. Проверь уже выполненные действия по истории сессии и актуальному get_task; не повторяй завершённые внешние действия. Итог передай через submit_result.";
+                var arguments = new List<string> { "-p", input, "-o", "stream-json", "--approval-mode", approvalMode,
+                    "--max-wall-time", options.Value.WallTimeSeconds + "s", "--max-session-turns", options.Value.MaxTurns.ToString(), "--max-tool-calls", options.Value.MaxToolCalls.ToString() };
+                if (!string.IsNullOrWhiteSpace(board.Model)) arguments.AddRange(["--model", board.Model]);
+                if (session is not null) arguments.AddRange(["--resume", session]);
+                foreach (var argument in arguments) info.ArgumentList.Add(argument);
+                using var process = Process.Start(info) ?? throw new RuleException("Не удалось запустить Gigacode");
+                void Stop() { try { process.Kill(true); } catch (InvalidOperationException) { } }
+                process.StandardInput.Close();
+                using var registration = ct.Register(Stop);
+                var stdout = Read(process.StandardOutput, assignment, true, output, Stop, ct);
+                var stderr = Read(process.StandardError, assignment, false, output, Stop, ct);
+                try { await Task.WhenAll(stdout, stderr, process.WaitForExitAsync(ct)); }
+                finally
+                {
+                    if (!process.HasExited) { Stop(); await process.WaitForExitAsync(CancellationToken.None); }
+                }
+                ct.ThrowIfCancellationRequested();
+                await using var scope = scopes.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<Database>();
+                var run = await db.Runs.AsNoTracking().SingleAsync(r => r.Id == assignment.RunId, ct);
+                if (output.AuthenticationFailed && run.PendingResultJson is null)
+                {
+                    if (attempt != 0) throw new RuleException("Авторизация Gigacode снова отклонена после скрипта. Автоматический повтор остановлен; проверьте настройки и продолжите задачу вручную.");
+                    db.Events.Add(new TaskEvent { TaskId = task.Id, RunId = assignment.RunId, Kind = "runtime", Author = "backend", Text = "Gigacode сообщил об ошибке авторизации. Бэкенд восстанавливает авторизацию через настроенный скрипт." });
+                    await db.SaveChangesAsync(ct);
+                    await authentication.Recover(generation, ct);
+                    if (await db.Runs.AsNoTracking().AnyAsync(r => r.Id == assignment.RunId && r.PendingResultJson != null, ct))
+                        throw new RuleException("Во время восстановления авторизации получен итог. Он сохранён, автоматический повтор остановлен; проверьте выполненные действия.");
+                    session = output.Session;
+                    if (session is null && output.HasActivity)
+                        throw new RuleException("Авторизация восстановлена, но Gigacode не передал ID сессии после начала работы. Проверьте выполненные действия и продолжите задачу вручную.");
+                    db.Events.Add(new TaskEvent { TaskId = task.Id, RunId = assignment.RunId, Kind = "runtime", Author = "backend", Text = session is null ? "Авторизация восстановлена. Бэкенд повторяет запуск, прерванный до начала работы." : "Авторизация восстановлена. Бэкенд возобновляет прежнюю сессию Gigacode." });
+                    await db.SaveChangesAsync(ct);
+                    continue;
+                }
+                if (run.PendingResultJson is null)
+                    throw new RuleException($"Gigacode завершился (код {process.ExitCode}), но не передал результат через submit_result. Проверьте MCP и разрешения.");
+                if (process.ExitCode != 0) throw new RuleException($"Gigacode завершился с кодом {process.ExitCode}. Полученный итог сохранён, но не применён.");
+                return;
             }
-            await using var scope = scopes.CreateAsyncScope();
-            var db = scope.ServiceProvider.GetRequiredService<Database>();
-            var run = await db.Runs.AsNoTracking().SingleAsync(r => r.Id == assignment.RunId, ct);
-            if (run.PendingResultJson is null)
-                throw new RuleException($"Gigacode завершился (код {process.ExitCode}), но не передал результат через submit_result. Проверьте MCP и разрешения.");
-            if (process.ExitCode != 0) throw new RuleException($"Gigacode завершился с кодом {process.ExitCode}. Полученный итог сохранён, но не применён.");
         }
         finally
         {
@@ -210,6 +233,7 @@ public sealed class GigacodeRunner(IServiceScopeFactory scopes, Workspace worksp
         Используй навыки task-execution / task-decomposition / task-critique / task-feedback по роли.
         Найди инструменты MCP giga-todo через tool_search. Сначала get_task для актуального контекста.
         Пользовательские навыки и внешние MCP доступны из твоего окружения. Не обходи их ограничения.
+        Авторизацией самого Gigacode управляет backend. Не запускай скрипты/команды его авторизации самостоятельно.
         Репозитории задачи: {Data.Pack(repositories)}. Конфигурация: {task.RepositoriesJson}.
         Вложения: {Data.Pack(attachments ?? [])}. Тот же список — attachments.json и get_task.
         Оригиналы доступны по OriginalPath; успешно распакованные архивы — по ContentPath, включая вложенные архивы в *.contents.
@@ -240,10 +264,12 @@ public sealed class GigacodeRunner(IServiceScopeFactory scopes, Workspace worksp
         ИСТОРИЯ: {Data.Pack(history.Select(e => new { e.Author, e.Kind, e.Text }))}
         """;
 
-    private async Task Read(StreamReader reader, Assignment assignment, bool parse, CancellationToken ct)
+    private async Task Read(StreamReader reader, Assignment assignment, bool parse, GigacodeOutput output, Action stop, CancellationToken ct)
     {
         while (await reader.ReadLineAsync(ct) is { } line)
         {
+            output.Observe(line, parse);
+            if (output.AuthenticationFailed) stop();
             string? session = null;
             if (parse)
             {

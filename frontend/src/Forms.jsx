@@ -54,7 +54,7 @@ export function TaskForm({ board, boards, options, schedule, recurring, close, s
 }
 
 function Repository({ value, remove }) {
-  return <div className="repo"><Field label="Локальный репозиторий" name="repoPath" value={value.path} required />
+  return <div className="repo"><Field label="Локальный путь к репозиторию" name="repoPath" value={value.path} placeholder="Абсолютный путь на компьютере бэкенда" required />
     <Field label="Базовая ветка" name="repoBase" value={value.baseBranch || 'HEAD'} />
     <div className="form-grid"><Field label="Команда frontend" name="repoCommand" value={value.frontendCommand} /><Field label="Локальный URL" name="repoLocal" value={value.localUrl} /></div>
     <Field label="API стенда" name="repoApi" value={value.apiUrl} /><Field label="Ссылка на дизайн" name="repoDesign" value={value.designUrl} />
