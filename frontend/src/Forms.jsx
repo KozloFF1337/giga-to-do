@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { api, date, days, formRequest, localDate, parse } from './api.js';
 import { Dependencies, Field, Select } from './ui.jsx';
 import { AttachmentPicker } from './Attachments.jsx';
+import { AuthenticationSettings } from './AuthenticationSettings.jsx';
 
 export function TaskForm({ board, boards, options, schedule, recurring, close, saved, notify }) {
   const ref = useRef(null);
@@ -75,7 +76,8 @@ export function Settings({ board, close, saved, notify }) {
       saved(); close(); notify('Настройки сохранены');
     } catch (error) { notify(error.message); } finally { setBusy(false); }
   }
-  return <form id="settings-form" onSubmit={submit}>
+  return <><AuthenticationSettings notify={notify} /><form id="settings-form" onSubmit={submit}>
+    <h3>Настройки доски</h3>
     <p><button type="button" className="secondary small" onClick={async () => { try { setCatalog(await api('agent-catalog')); } catch (error) { notify(error.message); } }}>Навыки и сценарии агентов</button></p>
     {catalog && <div id="agent-matrix"><p className="muted">Каталог {catalog.catalog.version} · {catalog.hash.slice(0, 12)}. Внешние навыки требуют настройки в Gigacode.</p>
       {catalog.catalog.profiles.filter(p => p.boardId === board.id).map(p => <details key={p.id} className="repo"><summary>{p.title} · {p.id}</summary>{p.scenarioIds.map(id => {
@@ -93,7 +95,7 @@ export function Settings({ board, close, saved, notify }) {
     <h3>Репозитории по умолчанию</h3><div className="repo-fields">{repos.map(r => <Repository key={r.key} value={r} remove={() => setRepos(list => list.filter(item => item.key !== r.key))} />)}</div>
     <button type="button" className="secondary" onClick={() => setRepos(list => [...list, { key: crypto.randomUUID() }])}>＋ Репозиторий</button>
     <div className="actions"><button type="button" className="secondary" onClick={close}>Отмена</button><button type="submit" disabled={busy}>Сохранить</button></div>
-  </form>;
+  </form></>;
 }
 export function ScheduleHistory({ slots, openTask }) {
   return slots.length ? slots.map(s => <p key={s.id}>{date(s.at)} · {s.state === 'created' ? 'Создан экземпляр' : 'Пропущено во время простоя'} {s.taskId && <button className="secondary small" onClick={() => openTask(s.taskId)}>Открыть</button>}</p>) : <p className="muted">Слотов пока нет</p>;

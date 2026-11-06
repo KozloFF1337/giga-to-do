@@ -13,6 +13,7 @@ builder.Services.AddOptions<RuntimeOptions>().BindConfiguration("Runtime").Valid
 builder.Services.AddSingleton<RuntimeControl>();
 builder.Services.AddSingleton<RunRegistry>();
 builder.Services.AddSingleton<Workspace>();
+builder.Services.AddSingleton<GigacodeAuthentication>();
 builder.Services.AddOptions<AttachmentOptions>().BindConfiguration("Attachments").Validate(AttachmentOptions.Valid, "Некорректные ограничения вложений").ValidateOnStart();
 builder.Services.AddSingleton<AttachmentStore>();
 builder.Services.AddSingleton(AgentCatalog.Default);
@@ -148,6 +149,16 @@ app.MapPost("/api/schedules/{id:guid}/toggle", async (Guid id, VersionRequest r,
 app.MapGet("/api/schedules/{id:guid}/history", async (Guid id, Database db, CancellationToken ct) => await db.Slots.AsNoTracking().Where(s => s.ScheduleId == id).OrderByDescending(s => s.At).Take(100).ToArrayAsync(ct));
 app.MapGet("/api/runtime", async (RuntimeControl control, Microsoft.Extensions.Options.IOptions<RuntimeOptions> options, Database db, CancellationToken ct) => new { mode = control.Mode, executable = options.Value.Executable, publicUrl = options.Value.PublicUrl, wallTimeSeconds = options.Value.WallTimeSeconds, activeAgents = await db.Runs.CountAsync(r => r.State == RunState.Running, ct), agentLimit = options.Value.MaxConcurrentAgents });
 app.MapGet("/api/office", OfficeSnapshot.Read);
+app.MapGet("/api/runtime/authentication", (GigacodeAuthentication authentication, HttpContext http) =>
+{
+    http.Response.Headers.CacheControl = "no-store";
+    return Results.Ok(authentication.Current);
+});
+app.MapPut("/api/runtime/authentication", async (AuthenticationSettings request, GigacodeAuthentication authentication, HttpContext http, CancellationToken ct) =>
+{
+    http.Response.Headers.CacheControl = "no-store";
+    return Results.Ok(await authentication.Save(request, ct));
+});
 app.MapPut("/api/runtime", (RuntimeMode request, RuntimeControl control) => { control.Set(request.Mode); return Results.Ok(new { mode = control.Mode }); });
 app.MapGet("/api/events", async (HttpContext http, CancellationToken ct) =>
 {

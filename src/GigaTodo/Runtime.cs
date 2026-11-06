@@ -11,6 +11,8 @@ public sealed class RuntimeOptions
 {
     public string Runner { get; set; } = "Disabled";
     public string Executable { get; set; } = "gigacode";
+    public string AuthenticationCommand { get; set; } = "";
+    public int AuthenticationTimeoutSeconds { get; set; } = 120;
     public string Root { get; set; } = ".runtime";
     public string PublicUrl { get; set; } = "http://localhost:5180";
     public int WallTimeSeconds { get; set; } = 900;
@@ -129,10 +131,11 @@ public sealed class MockRunner(IServiceScopeFactory scopes, TimeProvider clock) 
     }
 }
 
-public sealed class GigacodeRunner(IServiceScopeFactory scopes, Workspace workspace, AttachmentStore store, IOptions<RuntimeOptions> options) : IAgentRunner
+public sealed class GigacodeRunner(IServiceScopeFactory scopes, Workspace workspace, AttachmentStore store, IOptions<RuntimeOptions> options, GigacodeAuthentication authentication) : IAgentRunner
 {
     public async Task Execute(Assignment assignment, CancellationToken ct)
     {
+        await authentication.BeforeLaunch(ct);
         WorkItem task; Board board; TaskEvent[] history; AttachmentInfo[] attachments;
         await using (var scope = scopes.CreateAsyncScope())
         {
